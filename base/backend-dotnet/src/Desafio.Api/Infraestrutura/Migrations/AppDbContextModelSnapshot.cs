@@ -39,6 +39,10 @@ namespace Desafio.Api.Infraestrutura.Migrations
                     b.Property<DateOnly>("DataNascimento")
                         .HasColumnType("date");
 
+                    b.Property<DateTime?>("ExcluidoEm")
+                        .IsConcurrencyToken()
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("NomeCompleto")
                         .IsRequired()
                         .HasMaxLength(120)
@@ -48,11 +52,16 @@ namespace Desafio.Api.Infraestrutura.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("Status")
+                        .IsConcurrencyToken()
                         .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Cpf")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Beneficiarios_Cpf");
 
                     b.HasIndex("PlanoId");
 

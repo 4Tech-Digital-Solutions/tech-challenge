@@ -1,4 +1,7 @@
 using System.Net;
+using Desafio.Api.Dominio;
+using Microsoft.EntityFrameworkCore;
+
 namespace Desafio.Api.Tests;
 
 [Collection(ColecaoDaApi.Nome)]
@@ -156,7 +159,8 @@ public class BeneficiariosTests(ApiFixture fixture) : IAsyncLifetime
     {
         var beneficiario = (await fixture.SemearBeneficiariosAsync(1)).Single();
 
-        await Client.DeleteAsync($"/beneficiarios/{beneficiario.Id}");
+        var exclusao = await Client.DeleteAsync($"/beneficiarios/{beneficiario.Id}");
+        Assert.Equal(HttpStatusCode.NoContent, exclusao.StatusCode);
 
         var resposta = await Client.PostAsync("/beneficiarios", Http.Json(CorpoDeCriacao(beneficiario.Cpf)));
 
@@ -214,19 +218,19 @@ public class BeneficiariosTests(ApiFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Listar_sem_informar_tamanho_deve_devolver_20_itens_por_pagina()
+    public async Task Listar_sem_informar_tamanho_deve_devolver_10_itens_por_pagina()
     {
         await fixture.SemearBeneficiariosAsync(25);
 
         var corpo = await (await Client.GetAsync("/beneficiarios")).CorpoAsync();
 
-        Assert.Equal(20, corpo.GetProperty("dados").GetArrayLength());
-        Assert.Equal(20, corpo.GetProperty("tamanho").GetInt32());
+        Assert.Equal(10, corpo.GetProperty("dados").GetArrayLength());
+        Assert.Equal(10, corpo.GetProperty("tamanho").GetInt32());
         Assert.Equal(25, corpo.GetProperty("total").GetInt32());
     }
 
     [Fact]
-    public async Task Atualizar_dados_de_beneficiario_inativo_deve_devolver_200()
+    public async Task Atualizar_dados_de_beneficiario_inativo_deve_devolver_409()
     {
         var beneficiario = (await fixture.SemearBeneficiariosAsync(
             1, Planos.Bronze, "INATIVO", 500)).Single();
@@ -239,9 +243,14 @@ public class BeneficiariosTests(ApiFixture fixture) : IAsyncLifetime
             Status = "INATIVO"
         }));
 
-        Assert.Equal(HttpStatusCode.OK, resposta.StatusCode);
-
-        var corpo = await resposta.CorpoAsync();
-        Assert.Equal("Nome Corrigido do Inativo", corpo.GetProperty("nome_completo").GetString());
+        Assert.Equal(HttpStatusCode.Conflict, resposta.StatusCode);
+        await fixture.UsarBancoAsync(async db =>
+        {
+            var salvo = await db.Beneficiarios.SingleAsync(b => b.Id == beneficiario.Id);
+            Assert.Equal(beneficiario.NomeCompleto, salvo.NomeCompleto);
+            Assert.Equal(beneficiario.DataNascimento, salvo.DataNascimento);
+            Assert.Equal(beneficiario.PlanoId, salvo.PlanoId);
+            Assert.Equal(StatusBeneficiario.INATIVO, salvo.Status);
+        });
     }
 }
