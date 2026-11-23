@@ -1,0 +1,12 @@
+{
+  "identificador": "gabriel-pmtt",
+  "nome": "Gabriel Motta",
+  "email": "gabriel.pmtt@proton.me",
+  "imagem_api": "gabrielpmtt/desafio-4tech-api:1.0.0",
+  "imagem_web": "gabrielpmtt/desafio-4tech-web:1.0.0",
+  "stack": [
+    "dotnet-10",
+    "postgres-17",
+    "angular-20"
+  ]
+}
