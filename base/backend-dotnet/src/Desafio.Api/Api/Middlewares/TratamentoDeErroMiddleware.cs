@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Desafio.Api.Api.Contratos;
 using Desafio.Api.Dominio;
@@ -8,6 +9,8 @@ public class TratamentoDeErroMiddleware(RequestDelegate proximo, ILogger<Tratame
 {
     public async Task InvokeAsync(HttpContext contexto)
     {
+        var cronometro = Stopwatch.StartNew();
+
         try
         {
             await proximo(contexto);
@@ -36,6 +39,15 @@ public class TratamentoDeErroMiddleware(RequestDelegate proximo, ILogger<Tratame
                 []);
 
             await EscreverAsync(contexto, StatusCodes.Status500InternalServerError, resposta);
+        }
+        finally
+        {
+            logger.LogInformation(
+                "Requisição concluída. Método: {Metodo}. Rota: {Rota}. Status: {Status}. DuracaoMs: {DuracaoMs}",
+                contexto.Request.Method,
+                contexto.Request.Path,
+                contexto.Response.StatusCode,
+                cronometro.ElapsedMilliseconds);
         }
     }
 
