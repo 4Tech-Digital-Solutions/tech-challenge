@@ -1,0 +1,286 @@
+<section class="flex flex-col gap-5">
+  <header class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2.5">
+        <h1 class="m-0 text-2xl font-semibold tracking-tight text-slate-900">Beneficiários</h1>
+        @if (jaCarregou()) {
+          <span
+            class="inline-flex items-center rounded-full bg-slate-200/70 px-2.5 py-0.5 text-xs font-medium text-slate-700 tabular-nums"
+          >
+            {{ total() }}
+          </span>
+        }
+      </div>
+      <p class="mt-1 text-sm text-slate-500">
+        Cadastre, filtre e acompanhe os beneficiários vinculados aos planos de saúde.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        appBotao
+        variante="secundario"
+        tamanho="icone"
+        title="Recarregar listagem"
+        aria-label="Recarregar listagem"
+        (click)="recarregar()"
+        [disabled]="carregando()"
+      >
+        <app-icone
+          nome="refresh"
+          [tamanho]="15"
+          [classe]="carregando() || girandoRefresh() ? 'animate-spin' : ''"
+        />
+      </button>
+
+      <button type="button" appBotao variante="primario" (click)="abrirCriacao()">
+        <app-icone nome="plus" [tamanho]="16" />
+        Novo beneficiário
+      </button>
+    </div>
+  </header>
+
+  @if (erro() && beneficiarios().length > 0) {
+    <div
+      class="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-800"
+      role="alert"
+    >
+      <div class="flex items-center gap-2">
+        <app-icone nome="alert-circle" [tamanho]="16" classe="text-red-600" />
+        <span>{{ erro() }}</span>
+      </div>
+      <button
+        type="button"
+        appBotao
+        variante="fantasma"
+        tamanho="icone"
+        (click)="erro.set(null)"
+        aria-label="Fechar erro"
+      >
+        <app-icone nome="x" [tamanho]="14" />
+      </button>
+    </div>
+  }
+
+  <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <div class="flex flex-wrap items-center gap-3 border-b border-slate-200 px-4 py-3">
+      <div class="relative min-w-[220px] flex-1">
+        <app-icone
+          nome="search"
+          [tamanho]="15"
+          class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-slate-400"
+        />
+        <input
+          type="text"
+          class="w-full rounded-lg border border-slate-300 bg-white py-2 pr-8 pl-9 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-blue-600 focus:outline-none focus:ring-3 focus:ring-blue-600/15"
+          placeholder="Buscar por nome..."
+          aria-label="Buscar beneficiário por nome"
+          [value]="filtroBusca()"
+          (input)="alterarBusca($any($event.target).value)"
+        />
+        @if (filtroBusca()) {
+          <button
+            type="button"
+            class="absolute top-1/2 right-2 -translate-y-1/2 rounded p-0.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+            aria-label="Limpar busca"
+            (click)="alterarBusca('')"
+          >
+            <app-icone nome="x" [tamanho]="14" />
+          </button>
+        }
+      </div>
+
+      <div class="w-44">
+        <app-select
+          inputId="filtro-status"
+          [valor]="filtroStatus()"
+          (valorChange)="alterarFiltroStatus($event)"
+        >
+          <app-select-opcao valor="">Todas situações</app-select-opcao>
+          <app-select-opcao valor="ATIVO">Ativo</app-select-opcao>
+          <app-select-opcao valor="INATIVO">Inativo</app-select-opcao>
+        </app-select>
+      </div>
+
+      <div class="w-56">
+        <app-select
+          inputId="filtro-plano"
+          [valor]="filtroPlanoId()"
+          [pesquisavel]="true"
+          placeholderBusca="Buscar plano..."
+          (valorChange)="alterarFiltroPlano($event)"
+        >
+          <app-select-opcao valor="">Todos os planos</app-select-opcao>
+          @for (plano of planos(); track plano.id) {
+            <app-select-opcao [valor]="plano.id" [rotulo]="plano.nome">
+              {{ plano.nome }}
+            </app-select-opcao>
+          }
+        </app-select>
+      </div>
+
+      @if (temFiltrosAtivos()) {
+        <button
+          type="button"
+          appBotao
+          variante="secundario"
+          tamanho="sm"
+          class="text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+          (click)="limparFiltros()"
+        >
+          <app-icone nome="filter-x" [tamanho]="14" />
+          Limpar filtros
+        </button>
+      }
+    </div>
+
+    <app-tabela variante="limpa" [pendente]="carregando() && jaCarregou()">
+      <thead appTabelaCabecalho>
+        <tr>
+          <th appTabelaCabecalhoCelula>
+            <span class="inline-flex items-center gap-1.5">
+              <app-icone nome="user" [tamanho]="14" classe="text-slate-400" />
+              Nome completo
+            </span>
+          </th>
+          <th appTabelaCabecalhoCelula>
+            <span class="inline-flex items-center gap-1.5">
+              <app-icone nome="id-card" [tamanho]="14" classe="text-slate-400" />
+              CPF
+            </span>
+          </th>
+          <th appTabelaCabecalhoCelula>
+            <span class="inline-flex items-center gap-1.5">
+              <app-icone nome="calendar" [tamanho]="14" classe="text-slate-400" />
+              Nascimento
+            </span>
+          </th>
+          <th appTabelaCabecalhoCelula>
+            <span class="inline-flex items-center gap-1.5">
+              <app-icone nome="shield" [tamanho]="14" classe="text-slate-400" />
+              Plano
+            </span>
+          </th>
+          <th appTabelaCabecalhoCelula>
+            <span class="inline-flex items-center gap-1.5">
+              <app-icone nome="activity" [tamanho]="14" classe="text-slate-400" />
+              Situação
+            </span>
+          </th>
+          <th appTabelaCabecalhoCelula alinhar="direita">Ações</th>
+        </tr>
+      </thead>
+
+      <tbody
+        appTabelaCorpo
+        [colunas]="6"
+        [carregando]="carregando() && !jaCarregou()"
+        [erro]="beneficiarios().length === 0 ? erro() : null"
+        [vazio]="jaCarregou() && !erro() && beneficiarios().length === 0"
+        mensagemCarregando="Carregando beneficiários..."
+      >
+        <div tabelaVazio class="flex flex-col items-center gap-3">
+          @if (temFiltrosAtivos()) {
+            <p class="m-0 text-sm text-slate-500">
+              Nenhum beneficiário encontrado para os filtros aplicados.
+            </p>
+            <button type="button" appBotao variante="secundario" tamanho="sm" (click)="limparFiltros()">
+              Limpar filtros
+            </button>
+          } @else {
+            <p class="m-0 text-sm text-slate-500">Nenhum beneficiário cadastrado ainda.</p>
+            <button type="button" appBotao variante="primario" tamanho="sm" (click)="abrirCriacao()">
+              <app-icone nome="plus" [tamanho]="15" />
+              Cadastrar primeiro beneficiário
+            </button>
+          }
+        </div>
+
+        @for (beneficiario of beneficiarios(); track beneficiario.id) {
+          <tr
+            appTabelaLinha
+            [clicavel]="true"
+            (click)="abrirEdicao(beneficiario)"
+          >
+            <td appTabelaCelula variante="destaque">{{ beneficiario.nome_completo }}</td>
+            <td appTabelaCelula variante="mono">{{ formatarCpf(beneficiario.cpf) }}</td>
+            <td appTabelaCelula variante="mono">{{ formatarData(beneficiario.data_nascimento) }}</td>
+            <td appTabelaCelula>{{ nomeDoPlano(beneficiario.plano_id) }}</td>
+            <td appTabelaCelula>
+              <span
+                class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                [class]="
+                  beneficiario.status === 'ATIVO'
+                    ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20'
+                    : 'bg-slate-100 text-slate-600 ring-1 ring-slate-500/15'
+                "
+              >
+                <span
+                  class="size-1.5 rounded-full"
+                  [class]="beneficiario.status === 'ATIVO' ? 'bg-emerald-500' : 'bg-slate-400'"
+                  aria-hidden="true"
+                ></span>
+                {{ beneficiario.status === 'ATIVO' ? 'Ativo' : 'Inativo' }}
+              </span>
+            </td>
+            <td appTabelaCelula variante="acoes" (click)="$event.stopPropagation()">
+              <app-menu alinhamento="direita">
+                <button
+                  type="button"
+                  appBotao
+                  appMenuTrigger
+                  variante="fantasma"
+                  tamanho="icone"
+                  [disabled]="excluindoId() === beneficiario.id"
+                  [attr.aria-label]="'Ações para ' + beneficiario.nome_completo"
+                >
+                  <app-icone nome="more-vertical" [tamanho]="16" />
+                </button>
+
+                <app-menu-painel>
+                  <app-menu-item
+                    [desabilitado]="excluindoId() !== null"
+                    (escolhido)="abrirEdicao(beneficiario)"
+                  >
+                    <app-icone nome="edit" [tamanho]="14" classe="text-slate-400" />
+                    <span>Editar beneficiário</span>
+                  </app-menu-item>
+
+                  <app-menu-separador />
+
+                  <app-menu-confirmar-item
+                    textoConfirmacao="Excluir este beneficiário?"
+                    [desabilitado]="excluindoId() !== null"
+                    (confirmado)="confirmarExclusao(beneficiario)"
+                  >
+                    <app-icone nome="trash" [tamanho]="14" />
+                    <span>Excluir</span>
+                  </app-menu-confirmar-item>
+                </app-menu-painel>
+              </app-menu>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </app-tabela>
+
+    <app-paginacao
+      [pagina]="pagina()"
+      [tamanho]="tamanho()"
+      [total]="total()"
+      [desabilitado]="carregando()"
+      (paginaChange)="irParaPagina($event)"
+      (tamanhoChange)="alterarTamanho($event)"
+    />
+  </div>
+</section>
+
+@if (formularioAberto()) {
+  <app-beneficiario-form
+    [beneficiario]="editando()"
+    [planos]="planos()"
+    (salvo)="aoSalvar()"
+    (cancelado)="fecharFormulario()"
+  />
+}

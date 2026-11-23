@@ -1,17 +1,14 @@
-* {
-  box-sizing: border-box;
-}
+@import "tailwindcss";
 
-html,
-body {
-  margin: 0;
-  padding: 0;
-}
+@layer base {
+  body {
+    @apply m-0 bg-slate-50 text-slate-900 antialiased;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
 
-body {
-  background: #f4f5f7;
-  color: #111827;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-size: 15px;
-  line-height: 1.45;
+  h1,
+  h2,
+  h3 {
+    font-family: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+  }
 }

@@ -1,31 +1,72 @@
-<section class="cartao">
-  <header class="cabecalho">
-    <h2>Planos</h2>
-    <button type="button" (click)="carregar()" [disabled]="carregando()">Recarregar</button>
+<section class="flex flex-col gap-5">
+  <header class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2.5">
+        <h1 class="m-0 text-2xl font-semibold tracking-tight text-slate-900">Planos</h1>
+        @if (jaCarregou()) {
+          <span
+            class="inline-flex items-center rounded-full bg-slate-200/70 px-2.5 py-0.5 text-xs font-medium text-slate-700 tabular-nums"
+          >
+            {{ planos().length }}
+          </span>
+        }
+      </div>
+      <p class="mt-1 text-sm text-slate-500">
+        Planos de saúde ativos disponíveis para vínculo de beneficiários.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      appBotao
+      variante="secundario"
+      tamanho="icone"
+      title="Recarregar planos"
+      aria-label="Recarregar planos"
+      (click)="recarregar()"
+      [disabled]="carregando()"
+    >
+      <app-icone
+        nome="refresh"
+        [tamanho]="15"
+        [classe]="carregando() || girandoRefresh() ? 'animate-spin' : ''"
+      />
+    </button>
   </header>
 
-  @if (carregando()) {
-    <p class="aviso">Carregando planos...</p>
-  } @else if (erro()) {
-    <p class="aviso erro">{{ erro() }}</p>
-  } @else if (planos().length === 0) {
-    <p class="aviso">Nenhum plano cadastrado.</p>
-  } @else {
-    <table>
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Código ANS</th>
+  <app-tabela [pendente]="carregando() && jaCarregou()">
+    <thead appTabelaCabecalho>
+      <tr>
+        <th appTabelaCabecalhoCelula>
+          <span class="inline-flex items-center gap-1.5">
+            <app-icone nome="shield" [tamanho]="14" classe="text-slate-400" />
+            Nome do plano
+          </span>
+        </th>
+        <th appTabelaCabecalhoCelula>
+          <span class="inline-flex items-center gap-1.5">
+            <app-icone nome="hash" [tamanho]="14" classe="text-slate-400" />
+            Código ANS
+          </span>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody
+      appTabelaCorpo
+      [colunas]="2"
+      [carregando]="carregando() && !jaCarregou()"
+      [erro]="erro()"
+      [vazio]="jaCarregou() && planos().length === 0"
+      mensagemCarregando="Carregando planos..."
+      mensagemVazio="Nenhum plano cadastrado."
+    >
+      @for (plano of planos(); track plano.id) {
+        <tr appTabelaLinha>
+          <td appTabelaCelula variante="destaque">{{ plano.nome }}</td>
+          <td appTabelaCelula variante="mono">{{ plano.codigo_registro_ans }}</td>
         </tr>
-      </thead>
-      <tbody>
-        @for (plano of planos(); track plano.id) {
-          <tr>
-            <td>{{ plano.nome }}</td>
-            <td>{{ plano.codigo_registro_ans }}</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  }
+      }
+    </tbody>
+  </app-tabela>
 </section>

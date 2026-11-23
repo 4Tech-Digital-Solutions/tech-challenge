@@ -1,19 +1,158 @@
-<header class="topo">
-  <h1>Cadastro de Beneficiários</h1>
+<header class="sticky top-0 z-30 border-b border-slate-200 bg-white">
+  <div class="mx-auto flex h-14 max-w-6xl items-center justify-between gap-6 px-4 sm:px-6">
+    <div class="flex h-full items-center gap-8">
+      <a routerLink="/" class="flex items-center gap-2.5 no-underline">
+        <span
+          class="flex size-8 items-center justify-center rounded-lg bg-blue-600 text-white shadow-xs"
+          aria-hidden="true"
+        >
+          <app-icone nome="shield" [tamanho]="17" />
+        </span>
+        <span class="text-sm font-semibold tracking-tight text-slate-900">
+          Saúde Operadora
+        </span>
+      </a>
+
+      <nav aria-label="Navegação principal" class="flex h-full items-stretch gap-1">
+        <a
+          routerLink="/"
+          routerLinkActive="border-blue-600 text-slate-900"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="inline-flex items-center gap-2 border-b-2 border-transparent px-3 text-sm font-medium text-slate-500 no-underline transition-colors hover:text-slate-900"
+        >
+          <app-icone nome="users" [tamanho]="15" />
+          Beneficiários
+        </a>
+
+        <a
+          routerLink="/planos"
+          routerLinkActive="border-blue-600 text-slate-900"
+          class="inline-flex items-center gap-2 border-b-2 border-transparent px-3 text-sm font-medium text-slate-500 no-underline transition-colors hover:text-slate-900"
+        >
+          <app-icone nome="shield" [tamanho]="15" />
+          Planos
+        </a>
+      </nav>
+    </div>
+
+    <app-menu alinhamento="direita">
+      <button
+        type="button"
+        appBotao
+        appMenuTrigger
+        variante="fantasma"
+        tamanho="icone"
+        class="relative"
+        title="Simulação de rede"
+        aria-label="Simulação de rede"
+      >
+        <app-icone nome="settings" [tamanho]="16" />
+        @if (simulador.ativo()) {
+          <span
+            class="absolute top-1.5 right-1.5 size-2 rounded-full bg-amber-500 ring-2 ring-white"
+            aria-hidden="true"
+          ></span>
+        }
+      </button>
+
+      <app-menu-painel rotulo="Simulação de rede">
+        <div class="flex w-64 flex-col gap-3.5 p-2">
+          <div class="flex flex-col gap-1.5">
+            <label for="demo-atraso" class="text-xs font-medium text-slate-700">
+              Atraso nas requisições (ms)
+            </label>
+            <input
+              id="demo-atraso"
+              type="number"
+              min="0"
+              max="10000"
+              step="100"
+              class="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 tabular-nums focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/15"
+              [value]="simulador.atrasoMs()"
+              (input)="aoAlterarAtraso($any($event.target).value)"
+            />
+            <div class="flex items-center gap-1.5">
+              @for (ms of atalhosAtraso; track ms) {
+                <button
+                  type="button"
+                  class="rounded-md border px-2 py-0.5 text-xs font-medium tabular-nums transition-colors cursor-pointer"
+                  [class]="
+                    simulador.atrasoMs() === ms
+                      ? 'border-blue-600 bg-blue-50 text-blue-700'
+                      : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                  "
+                  (click)="simulador.definirAtraso(ms)"
+                >
+                  {{ ms === 0 ? 'Sem atraso' : ms + 'ms' }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="h-px bg-slate-200"></div>
+
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <span class="block text-xs font-medium text-slate-700">Simular erro na API</span>
+              <span class="block text-[11px] leading-snug text-slate-500">
+                Retorna 503 nas requisições seguintes.
+              </span>
+            </div>
+
+            <button
+              type="button"
+              role="switch"
+              [attr.aria-checked]="simulador.forcarErro()"
+              aria-label="Simular erro na API"
+              class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+              [class]="simulador.forcarErro() ? 'bg-red-600' : 'bg-slate-300'"
+              (click)="simulador.definirForcarErro(!simulador.forcarErro())"
+            >
+              <span
+                class="inline-block size-3.5 rounded-full bg-white shadow-xs transition-transform"
+                [class]="simulador.forcarErro() ? 'translate-x-4.5' : 'translate-x-1'"
+              ></span>
+            </button>
+          </div>
+
+          @if (simulador.ativo()) {
+            <button
+              type="button"
+              appBotao
+              variante="link"
+              tamanho="sm"
+              class="self-start !px-0"
+              (click)="simulador.resetar()"
+            >
+              Restaurar padrão
+            </button>
+          }
+
+          <div class="h-px bg-slate-200"></div>
+
+          <div class="flex flex-col gap-1.5">
+            <span class="text-xs font-medium text-slate-700">Dados para teste</span>
+            <button
+              type="button"
+              appBotao
+              variante="secundario"
+              tamanho="sm"
+              class="w-full"
+              [disabled]="populando() || simulador.forcarErro()"
+              (click)="popularDemo()"
+            >
+              <app-icone nome="database" [tamanho]="14" />
+              {{ populando() ? 'Populando...' : 'Popular 15 beneficiários' }}
+            </button>
+          </div>
+        </div>
+      </app-menu-painel>
+    </app-menu>
+  </div>
 </header>
 
-<main>
-  <app-planos-lista />
-
-  <section class="cartao pendente">
-    <h2>Beneficiários</h2>
-    <p>
-      Esta é a parte que falta. Construa a listagem com filtros e paginação e o formulário de
-      cadastro e edição, seguindo a seção 9 da <code>SPEC.md</code>.
-    </p>
-    <p>
-      O bloco de Planos acima já funciona e serve de referência: modelo tipado, serviço
-      isolado, endereço da API injetado, tratamento de erro e de carregamento.
-    </p>
-  </section>
+<main class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+  <router-outlet />
 </main>
+
+<app-toaster />
