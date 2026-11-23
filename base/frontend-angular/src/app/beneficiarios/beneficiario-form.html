@@ -1,0 +1,147 @@
+<div
+  class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-[2px]"
+  (click)="fechar()"
+>
+  <div
+    class="w-full max-w-xl rounded-xl border border-slate-200 bg-white p-6 shadow-2xl"
+    role="dialog"
+    aria-modal="true"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="mb-5 flex items-start justify-between gap-4">
+      <div>
+        <h3 class="m-0 text-lg font-semibold text-slate-900">
+          {{ editando() ? 'Editar beneficiário' : 'Novo beneficiário' }}
+        </h3>
+        <p class="mt-1 text-sm text-slate-500">
+          {{
+            editando()
+              ? 'Atualize os dados cadastrais ou a situação do beneficiário.'
+              : 'Preencha os dados abaixo para cadastrar um novo beneficiário.'
+          }}
+        </p>
+      </div>
+      <button
+        type="button"
+        appBotao
+        variante="fantasma"
+        tamanho="icone"
+        (click)="fechar()"
+        [disabled]="salvando()"
+        aria-label="Fechar"
+      >
+        <app-icone nome="x" [tamanho]="16" />
+      </button>
+    </header>
+
+    @if (erroApi()) {
+      <div
+        class="mb-4 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-800"
+        role="alert"
+      >
+        <strong>Não foi possível salvar:</strong> {{ erroApi() }}
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <app-campo
+          class="sm:col-span-2"
+          rotulo="Nome completo"
+          para="nome_completo"
+          [erro]="erroNome()"
+        >
+          <input
+            appInput
+            id="nome_completo"
+            type="text"
+            formControlName="nome_completo"
+            placeholder="Ex.: Maria Aparecida da Silva"
+            autocomplete="name"
+            [invalido]="campoInvalido('nome_completo')"
+          />
+        </app-campo>
+
+        <app-campo
+          rotulo="CPF"
+          para="cpf"
+          [erro]="erroCpf()"
+          [dica]="editando() ? 'O CPF não pode ser alterado após o cadastro.' : ''"
+        >
+          <app-input-mascara
+            mascara="cpf"
+            inputId="cpf"
+            formControlName="cpf"
+            [invalido]="campoInvalido('cpf')"
+          />
+        </app-campo>
+
+        <app-campo
+          rotulo="Data de nascimento"
+          para="data_nascimento"
+          [erro]="erroDataNascimento()"
+        >
+          <app-input-mascara
+            mascara="data"
+            inputId="data_nascimento"
+            formControlName="data_nascimento"
+            [invalido]="campoInvalido('data_nascimento')"
+          />
+        </app-campo>
+
+        <app-campo
+          [class.sm:col-span-2]="!editando()"
+          rotulo="Plano"
+          para="plano_id"
+          [erro]="erroPlano()"
+        >
+          <app-select
+            inputId="plano_id"
+            formControlName="plano_id"
+            placeholder="Selecione um plano..."
+            [pesquisavel]="true"
+            placeholderBusca="Buscar plano..."
+          >
+            @for (plano of planos(); track plano.id) {
+              <app-select-opcao [valor]="plano.id" [rotulo]="plano.nome">
+                {{ plano.nome }} (ANS {{ plano.codigo_registro_ans }})
+              </app-select-opcao>
+            }
+          </app-select>
+        </app-campo>
+
+        @if (editando()) {
+          <app-campo
+            rotulo="Situação"
+            para="status"
+            [dica]="
+              beneficiario()?.status === 'INATIVO' && form.controls.status.value === 'INATIVO'
+                ? 'Registro inativo é congelado. Para alterar dados cadastrais, mude para Ativo.'
+                : ''
+            "
+          >
+            <app-select inputId="status" formControlName="status">
+              <app-select-opcao valor="ATIVO">Ativo</app-select-opcao>
+              <app-select-opcao valor="INATIVO">Inativo</app-select-opcao>
+            </app-select>
+          </app-campo>
+        }
+      </div>
+
+      <footer class="mt-6 flex justify-end gap-2.5 border-t border-slate-200 pt-4">
+        <button
+          type="button"
+          appBotao
+          variante="secundario"
+          (click)="fechar()"
+          [disabled]="salvando()"
+        >
+          Cancelar
+        </button>
+        <button type="submit" appBotao variante="primario" [disabled]="salvando()">
+          {{ salvando() ? 'Salvando...' : editando() ? 'Salvar alterações' : 'Cadastrar' }}
+        </button>
+      </footer>
+    </form>
+  </div>
+</div>
